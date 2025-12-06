@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CardFinder Pro v4.0 🇮🇳</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        /* ==================== 1. THEME: "Midnight Fintech" ==================== */
+        :root {
+            --bg-dark: #020617;
+            --bg-card: rgba(30, 41, 59, 0.6);
+            --primary: #6366f1;
+            --accent: #0ea5e9;
+            --success: #10b981;
+            --gold: #f59e0b;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --border: rgba(255, 255, 255, 0.08);
+            --glass: blur(16px);
+            --font-main: 'Inter', sans-serif;
+            --font-mono: 'JetBrains Mono', monospace;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            background-image: 
+                radial-gradient(circle at 0% 0%, rgba(99, 102, 241, 0.1) 0%, transparent 40%), 
+                radial-gradient(circle at 100% 100%, rgba(14, 165, 233, 0.1) 0%, transparent 40%);
+            color: var(--text-main); font-family: var(--font-main); margin: 0; padding: 0; min-height: 100vh;
+        }
+
+        .container { max-width: 1100px; margin: 0 auto; padding: 40px 20px; }
+
+        /* Typography */
+        h1 {
+            font-weight: 800; font-size: 2.8rem; margin-bottom: 5px; text-align: center; letter-spacing: -1.5px;
+            background: linear-gradient(to right, #fff, #94a3b8); -webkit-background-clip: text; background-clip: text; color: transparent;
+        }
+        .hero-sub { text-align: center; color: var(--accent); font-size: 0.9rem; margin-bottom: 40px; text-transform: uppercase; letter-spacing: 2px; }
+        
+        h2 { border-bottom: 1px solid var(--border); padding-bottom: 15px; margin-top: 0; font-size: 1.2rem; display:flex; align-items:center; gap:10px; }
+
+        /* Glass Panel */
+        .glass-panel {
+            background: var(--bg-card); backdrop-filter: var(--glass); -webkit-backdrop-filter: var(--glass);
+            border: 1px solid var(--border); border-radius: 20px; padding: 30px; margin-bottom: 30px;
+            box-shadow: 0 4px 24px -1px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Inputs */
+        .input-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px; }
+        .input-group label { display: block; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 6px; font-weight: 600; }
+        .input-wrapper { position: relative; display: flex; align-items: center; }
+        .input-wrapper span { position: absolute; left: 12px; color: var(--text-muted); font-family: var(--font-mono); font-size: 0.9rem; }
+        input[type="number"] {
+            width: 100%; background: rgba(15, 23, 42, 0.8); border: 1px solid var(--border); color: #fff;
+            padding: 12px 12px 12px 30px; border-radius: 10px; font-family: var(--font-mono); font-size: 0.95rem;
+            transition: all 0.2s ease;
+        }
+        input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 2px rgba(14, 165, 233, 0.2); }
+
+        /* Button */
+        #calculate-btn {
+            background: linear-gradient(135deg, var(--primary), var(--accent)); color: white; border: none;
+            padding: 16px; border-radius: 12px; font-size: 1rem; font-weight: 700; width: 100%; cursor: pointer;
+            text-transform: uppercase; letter-spacing: 1px; transition: all 0.2s;
+            box-shadow: 0 4px 20px rgba(99, 102, 241, 0.3);
+        }
+        #calculate-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(99, 102, 241, 0.5); }
+
+        #results-section { display: none; }
+
+        /* ==================== 2. CARD UI (Advanced) ==================== */
+        .card-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 25px; }
+        
+        .credit-card-ui {
+            background: linear-gradient(160deg, rgba(255,255,255,0.05), rgba(255,255,255,0.01));
+            border: 1px solid rgba(255,255,255,0.1); border-radius: 18px; padding: 0;
+            position: relative; overflow: hidden; height: 360px; /* Fixed height */
+            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            display: flex; flex-direction: column;
+        }
+        
+        .credit-card-ui:hover { transform: scale(1.02); z-index: 5; border-color: var(--accent); box-shadow: 0 20px 40px -10px rgba(0,0,0,0.6); }
+
+        /* Card Face (Visible) */
+        .card-face { padding: 25px; height: 100%; display: flex; flex-direction: column; z-index: 2; transition: opacity 0.3s; }
+        .credit-card-ui:hover .card-face { opacity: 0.2; filter: blur(4px); }
+
+        .bank-badge { 
+            background: rgba(255,255,255,0.1); padding: 4px 10px; border-radius: 6px; 
+            font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;
+            display: inline-block; margin-bottom: 10px;
+        }
+
+        .card-name { font-size: 1.1rem; font-weight: 700; color: #fff; margin-bottom: 5px; line-height: 1.3; }
+        
+        .net-value-box { margin: 15px 0; }
+        .net-val { font-family: var(--font-mono); font-size: 2rem; color: var(--success); font-weight: 700; text-shadow: 0 0 20px rgba(16, 185, 129, 0.3); }
+        .net-label { font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; }
+
+        .breakdown-mini { 
+            background: rgba(0,0,0,0.3); border-radius: 8px; padding: 12px; margin-top: auto; 
+            border: 1px dashed var(--border);
+        }
+        .bd-row { display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 5px; color: var(--text-muted); }
+        .bd-row b { color: var(--text-main); font-family: var(--font-mono); }
+
+        .fee-row { display: flex; justify-content: space-between; margin-top: 15px; font-size: 0.8rem; border-top: 1px solid var(--border); padding-top: 10px; }
+
+        /* OVERLAY (Hidden Perks) */
+        .card-overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(2, 6, 23, 0.95); padding: 25px; box-sizing: border-box;
+            display: flex; flex-direction: column;
+            transform: translateY(100%); transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            z-index: 10;
+        }
+        .credit-card-ui:hover .card-overlay { transform: translateY(0); }
+
+        .perk-scroller { overflow-y: auto; flex-grow: 1; margin-top: 10px; padding-right: 5px; }
+        .perk-scroller::-webkit-scrollbar { width: 3px; background: rgba(255,255,255,0.1); }
+        .perk-scroller::-webkit-scrollbar-thumb { background: var(--accent); }
+
+        .perk-item { display: flex; gap: 12px; margin-bottom: 15px; align-items: center; }
+        .perk-icon { 
+            width: 36px; height: 36px; border-radius: 8px; background: rgba(255,255,255,0.05); 
+            display: flex; align-items: center; justify-content: center; font-size: 1.2rem; flex-shrink: 0;
+        }
+        .perk-text h4 { margin: 0; font-size: 0.85rem; color: var(--text-main); }
+        .perk-text p { margin: 0; font-size: 0.7rem; color: var(--text-muted); }
+        .perk-val-tag { margin-left: auto; font-family: var(--font-mono); font-size: 0.8rem; color: var(--success); }
+
+        /* Chart */
+        .chart-section { text-align: center; margin-bottom: 40px; }
+        #rewardsChart { max-height: 250px; }
+        .viz-total { font-family: var(--font-mono); font-size: 1.5rem; color: var(--success); font-weight: bold; margin-top: 10px; }
+
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>CardFinder Pro</h1>
+        <p class="hero-sub">The Ultimate Indian Credit Card Database (40+ Cards)</p>
+    </header>
+
+    <div style="display: flex; gap: 20px; flex-wrap: wrap;">
+        <div style="flex: 2; min-width: 300px;">
+            <section class="glass-panel">
+                <h2>📊 Monthly Spends (₹)</h2>
+                <div class="input-grid" id="spend-inputs"></div>
+            </section>
+        </div>
+
+        <div style="flex: 1; min-width: 250px;">
+            <section class="glass-panel" style="height: calc(100% - 62px);">
+                <h2>⚙️ Filters</h2>
+                <div style="display: flex; flex-direction: column; gap: 15px;">
+                    <label style="display:flex; align-items:center; gap:10px; cursor:pointer;">
+                        <input type="checkbox" id="pref-low-fee">
+                        <span>Low Fee / LTF Only (< ₹500)</span>
+                    </label>
+                    <label style="display:flex; align-items:center; gap:10px; cursor:pointer;">
+                        <input type="checkbox" id="pref-travel">
+                        <span>Boost Travel Cards (Miles)</span>
+                    </label>
+                    <div style="margin-top: auto;">
+                        <button id="calculate-btn">Find Best Cards 🚀</button>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <section id="results-section">
+        
+        <div class="glass-panel chart-section">
+            <h2>🏆 Wealth Projection (Top Card)</h2>
+            <div style="position: relative; display: inline-block;">
+                <canvas id="rewardsChart"></canvas>
+            </div>
+            <div class="viz-total" id="viz-total-val">₹0</div>
+            <p style="font-size: 0.8rem; color: var(--text-muted);">Estimated Net Annual Benefit</p>
+        </div>
+
+        <h2 style="border:none; margin-bottom: 20px;">🥇 Top Recommendations (Sorted by Net Value)</h2>
+        <div class="card-list" id="cc-recommendations"></div>
+        
+        <div style="text-align:center; margin: 30px 0;">
+            <p style="font-size:0.8rem; color: var(--text-muted);">* Showing top 6 cards from our database of 40+ cards including HDFC, SBI, Axis, ICICI, Amex, IDFC, & more.</p>
+        </div>
+
+    </section>
+</div>
+
+<script>
+// ===================================================================
+// 1. EXTENSIVE INDIAN CARD DATABASE (40+ CARDS)
+// ===================================================================
+// Note: Rates are simplified annual averages. Rent/Fuel usually 0 unless specified.
+const CATEGORIES = [
+    { id: 'rent', label: '🏠 Rent', hint: 'Housing/Shop' },
+    { id: 'grocery', label: '🛒 Grocery', hint: 'Blinkit, BigBasket, JioMart' },
+    { id: 'dining', label: '🍽️ Dining', hint: 'Zomato, Swiggy, Restaurants' },
+    { id: 'travel', label: '✈️ Travel', hint: 'Flights, Hotels, Train' },
+    { id: 'fuel', label: '⛽ Fuel', hint: 'Petrol, Diesel' },
+    { id: 'bills', label: '💡 Utilities', hint: 'Elec, Mobile, Broadband' },
+    { id: 'online', label: '🛍️ Shopping', hint: 'Amazon, Flipkart, Myntra' },
+    { id: 'other', label: '🤷 Other', hint: 'Offline, General, UPI' }
+];
+
+const DB = [
+    // --- SBI CARDS ---
+    { name: "SBI Cashback", bank: "SBI", fee: 999, waiver: 200000, rates: { online: 5, rent: 0, bills: 0, other: 1 }, perks: [{n:"Auto-Credit",d:"Cashback to statement",v:0}], type: "CC" },
+    { name: "SBI Prime", bank: "SBI", fee: 2999, waiver: 300000, rates: { dining: 2.5, grocery: 2.5, bills: 5, other: 0.5 }, perks: [{n:"Pizza Hut/Yatra",d:"Vouchers on joining",v:3000}, {n:"Lounge",d:"4 Domestic/yr",v:4000}], type: "CC" },
+    { name: "BPCL SBI Octane", bank: "SBI", fee: 1499, waiver: 200000, rates: { fuel: 6.25, dining: 2.5, grocery: 2.5, other: 0.25 }, perks: [{n:"Fuel Surcharge",d:"1% Waiver",v:1000}, {n:"Lounge",d:"4 Domestic/yr",v:4000}], type: "CC" },
+    { name: "SBI SimplyClick", bank: "SBI", fee: 499, waiver: 100000, rates: { online: 2.5, other: 0.25 }, perks: [{n:"Amazon Voucher",d:"Joining Gift",v:500}], type: "CC" },
+
+    // --- HDFC CARDS ---
+    { name: "HDFC Infinia Metal", bank: "HDFC", fee: 12500, waiver: 1000000, rates: { travel: 3.3, online: 3.3, other: 3.3 }, bonus: 12500, perks: [{n:"SmartBuy",d:"Up to 33% on Travel (Capped)",v:20000},{n:"Unlimited Lounge",d:"Global + Guests",v:50000},{n:"Golf",d:"Unlimited Games",v:10000},{n:"ITC Stay",d:"1+1 Buffet",v:5000}], type: "CC" },
+    { name: "HDFC Regalia Gold", bank: "HDFC", fee: 2500, waiver: 400000, rates: { travel: 2.6, dining: 1.3, online: 1.3, rent: 0.5, other: 0.8 }, bonus: 1500, perks: [{n:"Club Vistara",d:"Silver Tier",v:2000},{n:"Lounge",d:"12 Dom + 6 Intl",v:18000}], type: "CC" },
+    { name: "HDFC Millennia", bank: "HDFC", fee: 1000, waiver: 100000, rates: { online: 5, other: 1 }, cap: { online: 1000 }, perks: [{n:"Lounge",d:"4 Domestic/yr",v:4000}], type: "CC" },
+    { name: "Swiggy HDFC", bank: "HDFC", fee: 500, waiver: 200000, rates: { dining: 10, grocery: 5, online: 5, other: 1 }, cap: { dining: 1500, grocery: 1500 }, perks: [{n:"Swiggy One",d:"3 Months Free",v:899}], type: "CC" },
+    { name: "Tata Neu Infinity", bank: "HDFC", fee: 1499, waiver: 300000, rates: { online: 5, bills: 5, other: 1.5 }, perks: [{n:"Tata Neu",d:"10% on Tata App",v:2000},{n:"Lounge",d:"8 Dom + 4 Intl",v:12000}], type: "CC" },
+
+    // --- AXIS CARDS ---
+    { name: "Axis Ace", bank: "Axis", fee: 499, waiver: 200000, rates: { bills: 5, dining: 2, other: 2 }, cap: { bills: 500 }, perks: [{n:"Lounge",d:"4 Domestic/yr",v:4000}], type: "CC" },
+    { name: "Airtel Axis", bank: "Axis", fee: 500, waiver: 200000, rates: { bills: 25, dining: 10, grocery: 10, other: 1 }, cap: { bills: 300, dining: 500, grocery: 500 }, perks: [{n:"Amazon Prime",d:"1 Year Free (if active)",v:1499}], type: "CC" },
+    { name: "Flipkart Axis", bank: "Axis", fee: 500, waiver: 350000, rates: { online: 1.5, other: 1.5 }, perks: [{n:"Flipkart",d:"5% Unlimited on FK",v:2000}], type: "CC" },
+    { name: "Axis Atlas", bank: "Axis", fee: 5000, waiver: 1500000, rates: { travel: 4, other: 2 }, bonus: 2500, perks: [{n:"Tier Miles",d:"Accelerated Edge Miles",v:5000},{n:"Lounge",d:"Dom & Intl",v:10000}], type: "CC" },
+    { name: "Axis Magnus (Burgundy)", bank: "Axis", fee: 12500, waiver: 2500000, rates: { travel: 4.8, other: 2.4 }, bonus: 10000, perks: [{n:"BOGO",d:"BookMyShow",v:5000},{n:"Concierge",d:"24x7 Support",v:2000}], type: "CC" },
+
+    // --- ICICI CARDS ---
+    { name: "ICICI Amazon Pay", bank: "ICICI", fee: 0, waiver: 0, rates: { online: 3, other: 1 }, perks: [{n:"Prime",d:"5% for Prime Members",v:0},{n:"Dining",d:"Culinary Treats",v:500}], type: "CC" },
+    { name: "ICICI Emeralde Metal", bank: "ICICI", fee: 12000, waiver: 1500000, rates: { other: 1 }, perks: [{n:"Lounge",d:"Unlimited + Spa",v:25000},{n:"Golf",d:"Unlimited",v:10000}], type: "CC" },
+    { name: "ICICI Rubyx", bank: "ICICI", fee: 3000, waiver: 300000, rates: { other: 0.5 }, perks: [{n:"Lounge",d:"2 Domestic/qtr",v:8000},{n:"Movies",d:"25% off INOX/BookMyShow",v:2000}], type: "CC" },
+
+    // --- AMEX CARDS ---
+    { name: "Amex Platinum Travel", bank: "Amex", fee: 3500, waiver: 0, rates: { other: 1.5 }, milestone: { spend: 400000, reward: 25000 }, perks: [{n:"Taj Vouchers",d:"On Milestones",v:10000},{n:"Lounge",d:"8 Domestic/yr",v:8000}], type: "CC" },
+    { name: "Amex MRCC", bank: "Amex", fee: 1500, waiver: 150000, rates: { other: 1 }, perks: [{n:"Gold Collection",d:"18k/24k Karat",v:5000},{n:"Monthly Bonus",d:"1000 pts on 4x1500 txns",v:4000}], type: "CC" },
+    { name: "Amex SmartEarn", bank: "Amex", fee: 495, waiver: 40000, rates: { online: 2, taxi: 2, other: 0.5 }, perks: [{n:"Amazon",d:"5X Points",v:1000}], type: "CC" },
+
+    // --- IDFC FIRST ---
+    { name: "IDFC First Wealth", bank: "IDFC", fee: 0, waiver: 0, rates: { online: 1.5, other: 1.5 }, perks: [{n:"Lounge",d:"4 Dom + 4 Intl/qtr",v:20000},{n:"Spa",d:"Domestic Airport Spa",v:5000},{n:"Forex",d:"1.5% Markup",v:2000}], type: "CC" },
+    { name: "IDFC First Select", bank: "IDFC", fee: 0, waiver: 0, rates: { online: 1.2, other: 1.2 }, perks: [{n:"Lounge",d:"4 Domestic/qtr",v:16000},{n:"BOGO",d:"Movies up to ₹250",v:3000}], type: "CC" },
+    { name: "IDFC Millennia", bank: "IDFC", fee: 0, waiver: 0, rates: { online: 1, other: 1 }, perks: [{n:"Lounge",d:"4 Railway Lounge/qtr",v:2000}], type: "CC" },
+    
+    // --- OTHERS (SC, HSBC, AU, ONE, SCAPIA) ---
+    { name: "Scapia (Federal)", bank: "Federal", fee: 0, waiver: 0, rates: { travel: 2, online: 2, other: 1 }, perks: [{n:"Zero Forex",d:"0% Markup on Intl",v:5000},{n:"Lounge",d:"Unlimited (Spend based)",v:10000}], type: "CC" },
+    { name: "HSBC Cashback", bank: "HSBC", fee: 999, waiver: 200000, rates: { dining: 10, grocery: 10, delivery: 10, other: 1.5 }, cap: { dining: 1000, grocery: 1000 }, perks: [{n:"Amazon",d:"Voucher on joining",v:1000}], type: "CC" },
+    { name: "AU Zenith+", bank: "AU Bank", fee: 4999, waiver: 800000, rates: { dining: 2, travel: 2, other: 1 }, perks: [{n:"Lounge",d:"Intl + Dom",v:10000},{n:"Meet & Greet",d:"4 per year",v:8000}], type: "CC" },
+    { name: "Standard Chartered Smart", bank: "SC", fee: 499, waiver: 120000, rates: { online: 2, other: 2 }, perks: [{n:"Interest Free",d:"90 Days post setup",v:1000}], type: "CC" },
+    { name: "OneCard Metal", bank: "OneCard", fee: 0, waiver: 0, rates: { other: 0.2 }, perks: [{n:"Offers",d:"Around You Deals",v:500},{n:"Metal",d:"Premium Feel",v:0}], type: "CC" },
+    { name: "Yes Bank Marquee", bank: "Yes Bank", fee: 9999, waiver: 0, rates: { online: 2.5, other: 1.25 }, perks: [{n:"Lounge",d:"Unlimited Dom + Intl",v:30000},{n:"BOGO",d:"BookMyShow",v:5000}], type: "CC" },
+    { name: "RBL Play", bank: "RBL", fee: 500, waiver: 150000, rates: { entertainment: 5, other: 0.5 }, perks: [{n:"BookMyShow",d:"₹500 off monthly",v:6000}], type: "CC" },
+    { name: "Kotak Mojo", bank: "Kotak", fee: 1000, waiver: 100000, rates: { online: 2.5, other: 1 }, perks: [{n:"Lounge",d:"8 Domestic/yr",v:8000}], type: "CC" },
+    { name: "IndusInd Legend", bank: "IndusInd", fee: 0, waiver: 0, rates: { other: 1 }, perks: [{n:"Lounge",d:"1 Dom/qtr",v:4000},{n:"Forex",d:"1.8% Markup",v:1000}], type: "CC" }
+];
+
+// ================================= LOGIC =================================
+
+// 1. Generate Inputs
+const inputContainer = document.getElementById('spend-inputs');
+CATEGORIES.forEach(cat => {
+    inputContainer.innerHTML += `
+        <div class="input-group">
+            <label>${cat.label}</label>
+            <div class="input-wrapper">
+                <span>₹</span>
+                <input type="number" id="in-${cat.id}" placeholder="0">
+            </div>
+        </div>
+    `;
+});
+
+function calculate() {
+    const spends = {};
+    let totalSpend = 0;
+    CATEGORIES.forEach(cat => {
+        const val = Number(document.getElementById(`in-${cat.id}`).value) || 0;
+        spends[cat.id] = val;
+        totalSpend += val * 12;
+    });
+
+    if(totalSpend === 0) { alert("Please enter your spends first! 📉"); return; }
+
+    const prefLowFee = document.getElementById('pref-low-fee').checked;
+    const prefTravel = document.getElementById('pref-travel').checked;
+
+    const results = DB.map(card => {
+        let annualReward = 0;
+        let breakdown = {};
+        
+        // 1. Base Rewards
+        CATEGORIES.forEach(cat => {
+            const monthly = spends[cat.id];
+            if(monthly === 0) return;
+            
+            // Determine Rate
+            let rate = 0;
+            if (card.rates.hasOwnProperty(cat.id)) rate = card.rates[cat.id];
+            else if (cat.id !== 'rent' && cat.id !== 'fuel') rate = card.rates.other || 0;
+
+            // Travel Boost Preference (Artificial Weight)
+            if (prefTravel && (cat.id === 'travel' || card.rates.travel > 2)) rate *= 1.2;
+
+            // Calculate Monthly Reward
+            let monthlyEarn = monthly * (rate / 100);
+
+            // Apply Capping (Simplified Monthly Cap)
+            if (card.cap && card.cap[cat.id] && monthlyEarn > card.cap[cat.id]) {
+                monthlyEarn = card.cap[cat.id];
+            }
+
+            const yearlyEarn = monthlyEarn * 12;
+            annualReward += yearlyEarn;
+            if(yearlyEarn > 0) breakdown[cat.label] = yearlyEarn;
+        });
+
+        // 2. Milestone Logic (Annual)
+        if(card.milestone && totalSpend >= card.milestone.spend) {
+            annualReward += card.milestone.reward;
+            breakdown['🏆 Milestone'] = card.milestone.reward;
+        }
+
+        // 3. Fee Logic
+        let finalFee = card.fee;
+        if(card.waiver > 0 && totalSpend >= card.waiver) finalFee = 0;
+        
+        // 4. Filtering
+        let isValid = true;
+        if(prefLowFee && finalFee > 500) isValid = false;
+
+        return { 
+            ...card, 
+            gross: annualReward, 
+            net: annualReward + (card.bonus||0) - finalFee, 
+            isWaived: finalFee === 0 && card.fee > 0, 
+            breakdown, 
+            isValid,
+            finalFee
+        };
+    }).filter(r => r.isValid).sort((a,b) => b.net - a.net);
+
+    // Render
+    const section = document.getElementById('results-section');
+    section.style.display = 'block';
+    
+    renderCards(results.slice(0, 6), 'cc-recommendations'); // Show Top 6
+
+    if(results.length > 0) {
+        drawChart(results[0].breakdown);
+        document.getElementById('viz-total-val').innerText = "₹ " + Math.round(results[0].net).toLocaleString();
+    }
+    
+    // Smooth scroll
+    section.scrollIntoView({ behavior: 'smooth' });
+}
+
+function renderCards(list, containerId) {
+    const container = document.getElementById(containerId);
+    container.innerHTML = list.map((item, idx) => {
+        
+        // Perks Logic
+        let perkTotal = 0;
+        let perksHTML = '';
+        if(item.perks) {
+            perkTotal = item.perks.reduce((acc, p) => acc + p.v, 0);
+            perksHTML = item.perks.map(p => {
+                let icon = '🎁';
+                if(p.n.includes('Lounge')) icon = '🛋️';
+                if(p.n.includes('Amazon') || p.n.includes('Flipkart')) icon = '🛒';
+                if(p.n.includes('Travel') || p.n.includes('Vistara')) icon = '✈️';
+                if(p.n.includes('Movie') || p.n.includes('BOGO')) icon = '🎟️';
+                if(p.n.includes('Fuel')) icon = '⛽';
+                if(p.n.includes('Food') || p.n.includes('Swiggy') || p.n.includes('Dining')) icon = '🍔';
+                
+                return `
+                <div class="perk-item">
+                    <div class="perk-icon">${icon}</div>
+                    <div class="perk-text">
+                        <h4>${p.n}</h4>
+                        <p>${p.d}</p>
+                    </div>
+                    <div class="perk-val-tag">${p.v > 0 ? '+₹'+(p.v/1000).toFixed(1)+'k' : ''}</div>
+                </div>`;
+            }).join('');
+        }
+
+        // Breakdown Logic
+        const sortedBreakdown = Object.entries(item.breakdown).sort(([,a], [,b]) => b - a);
+
+        return `
+        <div class="credit-card-ui">
+            <div class="card-overlay">
+                <h3 style="margin:0 0 10px 0; border-bottom:1px solid rgba(255,255,255,0.2); padding-bottom:5px;">💎 Hidden Value</h3>
+                <div class="perk-scroller">
+                    ${perksHTML}
+                </div>
+                <div style="margin-top:auto; padding-top:10px; border-top:1px solid rgba(255,255,255,0.2); display:flex; justify-content:space-between;">
+                    <span style="font-size:0.8rem; color:#aaa;">Extra Value</span>
+                    <span style="font-weight:bold; color:var(--gold);">₹ ${perkTotal.toLocaleString()}</span>
+                </div>
+            </div>
+
+            <div class="card-face">
+                <div>
+                    <span class="bank-badge" style="color:${getBankColor(item.bank)}">${item.bank}</span>
+                    ${idx === 0 ? '<span class="bank-badge" style="background:var(--success); color:#000;">#1 RANK</span>' : ''}
+                </div>
+                <div class="card-name">${item.name}</div>
+                
+                <div class="net-value-box">
+                    <div class="net-val">₹ ${Math.round(item.net).toLocaleString()}</div>
+                    <div class="net-label">Net Annual Savings</div>
+                </div>
+
+                <div class="breakdown-mini">
+                    <div class="bd-row"><span>Source</span> <span>Rewards</span></div>
+                    ${sortedBreakdown.slice(0, 3).map(([k,v]) => `
+                        <div class="bd-row"><span>${k}</span> <b>₹${Math.round(v).toLocaleString()}</b></div>
+                    `).join('')}
+                    ${sortedBreakdown.length === 0 ? '<div style="font-size:0.8rem; text-align:center;">No rewards generated</div>' : ''}
+                </div>
+
+                <div class="fee-row">
+                    <span>Fee: <b style="color:${item.isWaived ? 'var(--success)' : '#ef4444'}">${item.isWaived ? 'WAIVED' : '₹'+item.finalFee}</b></span>
+                    <span style="color:var(--accent)">Hover for Perks →</span>
+                </div>
+            </div>
+        </div>
+        `;
+    }).join('');
+}
+
+function getBankColor(bank) {
+    if(bank === 'HDFC') return '#3b82f6';
+    if(bank === 'SBI') return '#0ea5e9';
+    if(bank === 'Axis') return '#be123c';
+    if(bank === 'ICICI') return '#f97316';
+    if(bank === 'Amex') return '#06b6d4';
+    return '#fff';
+}
+
+function drawChart(data) {
+    const canvas = document.getElementById('rewardsChart');
+    const ctx = canvas.getContext('2d');
+    
+    // Resize for crispness
+    const dpr = window.devicePixelRatio || 1;
+    const rect = canvas.getBoundingClientRect();
+    canvas.width = rect.width * dpr;
+    canvas.height = 250 * dpr;
+    ctx.scale(dpr, dpr);
+
+    const width = rect.width;
+    const height = 250;
+    const centerX = width / 2;
+    const centerY = height / 2;
+    const radius = 80;
+
+    ctx.clearRect(0, 0, width, height);
+
+    const values = Object.values(data);
+    const total = values.reduce((a, b) => a + b, 0);
+    if(total <= 0) return;
+
+    let startAngle = -0.5 * Math.PI;
+    const colors = ['#6366f1', '#0ea5e9', '#10b981', '#f59e0b', '#ec4899', '#8b5cf6', '#f43f5e'];
+    
+    Object.entries(data).forEach(([label, val], i) => {
+        const sliceAngle = (val / total) * 2 * Math.PI;
+        
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, radius, startAngle, startAngle + sliceAngle);
+        ctx.lineWidth = 15;
+        ctx.strokeStyle = colors[i % colors.length];
+        ctx.stroke();
+        
+        // Simple Legend Labels (if slice is big enough)
+        if(sliceAngle > 0.3) {
+            const midAngle = startAngle + sliceAngle / 2;
+            const tx = centerX + Math.cos(midAngle) * (radius + 30);
+            const ty = centerY + Math.sin(midAngle) * (radius + 30);
+            ctx.fillStyle = "#94a3b8";
+            ctx.font = "10px Inter";
+            ctx.textAlign = "center";
+            ctx.fillText(label, tx, ty);
+        }
+
+        startAngle += sliceAngle;
+    });
+
+    // Inner Text
+    ctx.fillStyle = "#fff";
+    ctx.font = "bold 16px Inter";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText("Total", centerX, centerY - 10);
+}
+
+document.getElementById('calculate-btn').addEventListener('click', calculate);
+
+</script>
+</body>
+</html>
